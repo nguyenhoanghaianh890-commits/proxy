@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloneZone - Shop Acc Game</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #08090d;
+      color: #fff;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(8, 9, 13, .92);
+      border-bottom: 1px solid #242631;
+      backdrop-filter: blur(10px);
+    }
+
+    nav {
+      max-width: 1150px;
+      margin: auto;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      color: #ff304f;
+      font-size: 25px;
+      font-weight: 900;
+      text-shadow: 0 0 15px #ff304f66;
+    }
+
+    .logo span {
+      color: #fff;
+    }
+
+    .cart {
+      background: #ff304f;
+      border: 0;
+      color: white;
+      padding: 10px 17px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .hero {
+      max-width: 1150px;
+      margin: auto;
+      padding: 70px 20px 45px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(35px, 7vw, 65px);
+      margin-bottom: 15px;
+    }
+
+    .hero h1 span {
+      color: #ff304f;
+    }
+
+    .hero p {
+      color: #9da1b0;
+      margin-bottom: 30px;
+    }
+
+    .search {
+      width: min(650px, 100%);
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 1px solid #30333f;
+      background: #12141b;
+      color: white;
+      outline: none;
+      font-size: 16px;
+    }
+
+    .filters {
+      max-width: 1150px;
+      margin: 0 auto 30px;
+      padding: 0 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter {
+      padding: 10px 16px;
+      border: 1px solid #30333f;
+      background: #12141b;
+      color: #bbb;
+      border-radius: 9px;
+      cursor: pointer;
+    }
+
+    .filter.active,
+    .filter:hover {
+      background: #ff304f;
+      color: #fff;
+      border-color: #ff304f;
+    }
+
+    .products {
+      max-width: 1150px;
+      margin: auto;
+      padding: 0 20px 70px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: #11131a;
+      border: 1px solid #252833;
+      border-radius: 15px;
+      overflow: hidden;
+      transition: .25s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: #ff304f;
+      box-shadow: 0 10px 35px #ff304f18;
+    }
+
+    .thumb {
+      height: 145px;
+      display: grid;
+      place-items: center;
+      font-size: 48px;
+      background:
+        radial-gradient(circle at center, #ff304f44, transparent 55%),
+        #171923;
+    }
+
+    .info {
+      padding: 18px;
+    }
+
+    .game {
+      color: #ff536b;
+      font-size: 13px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .name {
+      margin: 8px 0;
+      font-size: 18px;
+    }
+
+    .desc {
+      color: #858997;
+      font-size: 13px;
+      min-height: 38px;
+    }
+
+    .bottom {
+      margin-top: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .price {
+      color: #35e58c;
+      font-size: 19px;
+      font-weight: bold;
+    }
+
+    .buy {
+      background: #ff304f;
+      color: white;
+      border: 0;
+      padding: 9px 13px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .buy:hover {
+      background: #ff173a;
+    }
+
+    footer {
+      border-top: 1px solid #242631;
+      padding: 25px;
+      text-align: center;
+      color: #686c79;
+      font-size: 13px;
+    }
+
+    #empty {
+      display: none;
+      text-align: center;
+      color: #777;
+      grid-column: 1 / -1;
+      padding: 40px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <nav>
+    <div class="logo">CLONE<span>ZONE</span></div>
+    <button class="cart" onclick="showCart()">🛒 Giỏ hàng (<span id="count">0</span>)</button>
+  </nav>
+</header>
+
+<section class="hero">
+  <h1>SHOP <span>ACC GAME</span></h1>
+  <p>Kho acc clone demo — giao diện gaming hiện đại</p>
+  <input
+    id="search"
+    class="search"
+    type="text"
+    placeholder="🔎 Tìm kiếm tài khoản..."
+    oninput="renderProducts()"
+  >
+</section>
+
+<div class="filters">
+  <button class="filter active" onclick="setGame('all', this)">Tất cả</button>
+  <button class="filter" onclick="setGame('Free Fire', this)">Free Fire</button>
+  <button class="filter" onclick="setGame('Liên Quân', this)">Liên Quân</button>
+  <button class="filter" onclick="setGame('PUBG', this)">PUBG</button>
+  <button class="filter" onclick="setGame('Roblox', this)">Roblox</button>
+</div>
+
+<section class="products" id="products"></section>
+
+<footer>
+  © 2026 CloneZone — Website demo bán acc game.
+</footer>
+
+<script>
+  const data = [
+    {
+      game: "Free Fire",
+      icon: "🔥",
+      name: "Acc Clone #001",
+      desc: "Acc clone level thấp, phù hợp chơi phụ.",
+      price: 15000
+    },
+    {
+      game: "Free Fire",
+      icon: "🔥",
+      name: "Acc Clone #002",
+      desc: "Tài khoản demo có sẵn nhân vật cơ bản.",
+      price: 20000
+    },
+    {
+      game: "Liên Quân",
+      icon: "⚔️",
+      name: "Acc Clone #003",
+      desc: "Tài khoản phụ, thông tin hiển thị demo.",
+      price: 25000
+    },
+    {
+      game: "Liên Quân",
+      icon: "⚔️",
+      name: "Acc Clone #004",
+      desc: "Acc mới, phù hợp làm tài khoản phụ.",
+      price: 30000
+    },
+    {
+      game: "PUBG",
+      icon: "🎯",
+      name: "Acc Clone #005",
+      desc: "Tài khoản PUBG demo.",
+      price: 35000
+    },
+    {
+      game: "PUBG",
+      icon: "🎯",
+      name: "Acc Clone #006",
+      desc: "Acc phụ với thông tin mẫu.",
+      price: 40000
+    },
+    {
+      game: "Roblox",
+      icon: "🧱",
+      name: "Acc Clone #007",
+      desc: "Tài khoản Roblox demo.",
+      price: 20000
+    },
+    {
+      game: "Roblox",
+      icon: "🧱",
+      name: "Acc Clone #008",
+      desc: "Acc clone mẫu dành cho demo.",
+      price: 25000
+    }
+  ];
+
+  let selectedGame = "all";
+  let cart = [];
+
+  function money(value) {
+    return value.toLocaleString("vi-VN") + "đ";
+  }
+
+  function setGame(game, button) {
+    selectedGame = game;
+
+    document.querySelectorAll(".filter")
+      .forEach(btn => btn.classList.remove("active"));
+
+    button.classList.add("active");
+    renderProducts();
+  }
+
+  function renderProducts() {
+    const keyword =
+      document.getElementById("search").value.toLowerCase();
+
+    const list = data.filter(item => {
+      const gameMatch =
+        selectedGame === "all" || item.game === selectedGame;
+
+      const searchMatch =
+        item.name.toLowerCase().includes(keyword) ||
+        item.game.toLowerCase().includes(keyword);
+
+      return gameMatch && searchMatch;
+    });
+
+    const box = document.getElementById("products");
+
+    box.innerHTML = "";
+
+    document.getElementById("empty").style.display =
+      list.length ? "none" : "block";
+
+    list.forEach((item, index) => {
+      box.innerHTML += `
+        <article class="card">
+          <div class="thumb">${item.icon}</div>
+
+          <div class="info">
+            <div class="game">${item.game}</div>
+            <h3 class="name">${item.name}</h3>
+            <p class="desc">${item.desc}</p>
+
+            <div class="bottom">
+              <span class="price">${money(item.price)}</span>
+              <button class="buy" onclick="addCart(${data.indexOf(item)})">
+                Mua ngay
+              </button>
+            </div>
+          </div>
+        </article>
+      `;
+    });
+
+    if (!list.length) {
+      box.innerHTML = '<div id="empty" style="display:block">Không tìm thấy acc.</div>';
+    }
+  }
+
+  function addCart(index) {
+    cart.push(data[index]);
+    document.getElementById("count").textContent = cart.length;
+
+    alert("✅ Đã thêm " + data[index].name + " vào giỏ hàng!");
+  }
+
+  function showCart() {
+    if (!cart.length) {
+      alert("🛒 Giỏ hàng đang trống.");
+      return;
+    }
+
+    let total = cart.reduce((sum, item) => sum + item.price, 0);
+
+    let text = "GIỎ HÀNG\\n\\n";
+
+    cart.forEach((item, i) => {
+      text += `${i + 1}. ${item.name} - ${money(item.price)}\\n`;
+    });
+
+    text += `\\nTổng: ${money(total)}`;
+    text += "\\n\\nDemo: chưa tích hợp thanh toán.";
+
+    alert(text);
+  }
+
+  renderProducts();
+</script>
+
+</body>
+</html>
