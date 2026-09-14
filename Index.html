@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Proxy Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: #0a0e17;
+            color: #e0e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            position: relative;
+        }
+
+        /* HOA ANH ĐÀO RƠI */
+        #sakuraContainer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .sakura {
+            position: absolute;
+            top: -50px;
+            font-size: 20px;
+            opacity: 0;
+            animation: sakuraFall linear infinite;
+        }
+        @keyframes sakuraFall {
+            0% { transform: translateY(-50px) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(105vh) rotate(720deg); opacity: 0.2; }
+        }
+
+        /* NÚT ẨN ADMIN */
+        #hiddenAdmin {
+            position: fixed;
+            top: 10px; left: 10px;
+            width: 40px; height: 40px;
+            background: transparent;
+            z-index: 99999;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        /* TOAST */
+        #toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a2a3a;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 999999;
+            display: none;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+            border: 1px solid #00d4ff;
+            max-width: 90vw;
+            text-align: center;
+        }
+        #toast.show { display: block; animation: toastIn 0.3s ease; }
+        #toast.error { border-color: #e63946; }
+        #toast.success { border-color: #2ecc71; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* LOGIN */
+        #loginScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 24px;
+            position: relative;
+            z-index: 10;
+        }
+        #loginScreen .logo {
+            font-size: 42px;
+            font-weight: 800;
+            color: #00d4ff;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            text-shadow: 0 0 30px rgba(0,212,255,0.5);
+        }
+        #loginScreen .sub {
+            color: #8a9aa8;
+            font-size: 15px;
+            margin-bottom: 32px;
+        }
+        #loginScreen input {
+            width: 100%;
+            max-width: 320px;
+            padding: 16px;
+            background: #0f1922;
+            border: 2px solid #1a2a3a;
+            border-radius: 14px;
+            color: #e0e8f0;
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+            margin-bottom: 16px;
+        }
+        #loginScreen input:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0,212,255,0.2);
+        }
+        #loginScreen .btn-login {
+            width: 100%;
+            max-width: 320px;
+            padding: 16px;
+            background: linear-gradient(135deg, #00b4d8, #0077b6);
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        #loginScreen .btn-login:active { transform: scale(0.97); }
+        #loginScreen .hint {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #4a5a6a;
+            text-align: center;
+        }
+
+        /* MAIN */
+        #mainScreen {
+            display: none;
+            padding: 20px;
+            padding-top: 30px;
+            padding-bottom: 100px;
+            position: relative;
+            z-index: 10;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #1f2e3c;
+        }
+        .header .logo {
+            font-size: 22px;
+            font-weight: 800;
+            color: #00d4ff;
+        }
+        .header .right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header .key-info {
+            background: #0f1922;
+            border: 1px solid #1f2e3c;
+            border-radius: 30px;
+            padding: 6px 14px;
+            font-size: 12px;
+            color: #f1c40f;
+        }
+        .change-key-btn {
+            background: #0f1922;
+            border: 1px solid #f1c40f;
+            color: #f1c40f;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .change-key-btn:active { transform: scale(0.95); }
+
+        /* LOG SS */
+        .log-ss {
+            background: linear-gradient(135deg, #1a2a3a, #0f1922);
+            border: 1px solid #00d4ff;
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .log-ss .info { display: flex; align-items: center; gap: 10px; }
+        .log-ss .icon { font-size: 24px; }
+        .log-ss .title { font-size: 14px; font-weight: 700; color: #00d4ff; }
+        .log-ss .desc { font-size: 12px; color: #8a9aa8; margin-top: 2px; }
+        .log-ss .toggle {
+            position: relative;
+            width: 50px; height: 28px;
+            background: #2ecc71;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+        .log-ss .toggle.off { background: #1a2a3a; }
+        .log-ss .toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px; left: 25px;
+            width: 22px; height: 22px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        .log-ss .toggle.off::after { left: 3px; }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .tabs .tab {
+            flex: 1;
+            padding: 12px 0;
+            text-align: center;
+            background: #0f1922;
+            border: 1px solid #1a2a3a;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
+            color: #8a9aa8;
+            cursor: pointer;
+        }
+        .tabs .tab.active {
+            background: #1a2a3a;
+            border-color: #00d4ff;
+            color: #f0faff;
+            box-shadow: 0 0 20px rgba(0,212,255,0.2);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* FEATURE */
+        .feature-item {
+            background: #0f1922;
+            border: 1px solid #1a2a3a;
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .feature-item:active { transform: scale(0.98); }
+        .feature-item .left { display: flex; align-items: center; gap: 12px; }
+        .feature-item .icon { font-size: 22px; }
+        .feature-item .name { font-size: 15px; font-weight: 600; }
+        .feature-item .sub { font-size: 11px; color: #6a8a9a; margin-top: 2px; }
+        .feature-item .switch {
+            position: relative;
+            width: 46px; height: 26px;
+            background: #1a2a3a;
+            border-radius: 40px;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+        .feature-item .switch.on {
+            background: #2ecc71;
+            box-shadow: 0 0 20px rgba(46,204,113,0.5);
+        }
+        .feature-item .switch::after {
+            content: '';
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 20px; height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        .feature-item .switch.on::after { left: 23px; }
+
+        /* VPN */
+        .btn-vpn-download {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #f1c40f, #e67e22);
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 0 25px rgba(241,196,15,0.3);
+        }
+        .btn-vpn-download:active { transform: scale(0.97); }
+
+        /* ADMIN */
+        #adminPanel {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #0a0e17;
+            z-index: 999998;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        #adminPanel.active { display: block; }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #1f2e3c;
+        }
+        .admin-header h2 { color: #00d4ff; font-size: 22px; }
+        .close-admin {
+            background: #0f1922;
+            border: 1px solid #1f2e3c;
+            color: #8a9aa8;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .section {
+            background: #0f1922;
+            border: 1px solid #1f2e3c;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #b0c8e0;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1a2a3a;
+        }
+        .key-types {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .key-type {
+            flex: 1;
+            min-width: 60px;
+            padding: 10px 0;
+            text-align: center;
+            background: #1a2332;
+            border: 1px solid #2f3b4f;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            color: #8a9bb0;
+            cursor: pointer;
+        }
+        .key-type.active {
+            background: #1a2c3e;
+            border-color: #00d4ff;
+            color: #f0faff;
+            box-shadow: 0 0 15px rgba(0,212,255,0.3);
+        }
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            background: #0c151e;
+            border: 1px solid #1a2a3a;
+            border-radius: 10px;
+            color: #e0e8f0;
+            font-size: 14px;
+            outline: none;
+        }
+        .input-group input:focus { border-color: #00d4ff; }
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #00b4d8, #0077b6);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+        .btn-danger {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid #e63946;
+            border-radius: 10px;
+            color: #e63946;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .key-list { max-height: 300px; overflow-y: auto; }
+        .key-item {
+            background: #0c151e;
+            border: 1px solid #1a2a3a;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .key-item .key-code {
+            font-family: monospace;
+            font-size: 13px;
+            color: #f1c40f;
+            word-break: break-all;
+        }
+        .key-item .key-info {
+            font-size: 11px;
+            color: #6a8a9a;
+            margin-top: 2px;
+        }
+        .key-item .del-btn {
+            background: none;
+            border: none;
+            color: #e63946;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 6px;
+        }
+
+        #floatingBtn {
+            display: none;
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            z-index: 99999;
+            background: rgba(15, 25, 34, 0.95);
+            border: 1px solid #00d4ff;
+            border-radius: 50%;
+            width: 60px; height: 60px;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(0,212,255,0.4);
+        }
+        #floatingBtn.active { display: flex; }
+    </style>
+</head>
+<body>
+
+<div id="sakuraContainer"></div>
+<div id="hiddenAdmin" onclick="openAdmin()"></div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+    <div class="logo">PROXY TOOL</div>
+    <div class="sub">Nhập key kích hoạt để sử dụng</div>
+    <input type="text" id="keyInput" placeholder="Nhập key..." autocomplete="off">
+    <button class="btn-login" onclick="doLogin()">KÍCH HOẠT</button>
+    <div class="hint">
+        🛡️ Anti-Ban bảo vệ<br>
+        <span style="color:#00d4ff;">Admin pass: admin123</span>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div id="mainScreen">
+    <div class="header">
+        <div class="logo">PROXY TOOL</div>
+        <div class="right">
+            <div class="key-info" id="keyInfo">KEY: ---</div>
+            <button class="change-key-btn" onclick="changeKey()">🔄 Đổi</button>
+        </div>
+    </div>
+
+    <div class="log-ss">
+        <div class="info">
+            <div class="icon">🛡️</div>
+            <div>
+                <div class="title">Log SS Anti-Ban</div>
+                <div class="desc">Tự động ghi log - Bảo vệ tài khoản</div>
+            </div>
+        </div>
+        <div class="toggle" id="logToggle" onclick="toggleLogSS()"></div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('aim')">🎯 AIM</div>
+        <div class="tab" onclick="switchTab('pro')">⚡ PRO</div>
+    </div>
+
+    <div class="tab-content active" id="tabAim">
+        <div class="feature-item" onclick="toggleFeature('aim', 'magic')">
+            <div class="left"><span class="icon">✨</span><div><div class="name">Aim Magic</div><div class="sub">Tự động ngắm ma thuật</div></div></div>
+            <div class="switch" id="sw_aim_magic"></div>
+        </div>
+        <div class="feature-item" onclick="toggleFeature('aim', 'body')">
+            <div class="left"><span class="icon">🎯</span><div><div class="name">Aim Body</div><div class="sub">Ngắm vào thân</div></div></div>
+            <div class="switch" id="sw_aim_body"></div>
+        </div>
+        <div class="feature-item" onclick="toggleFeature('aim', 'neck')">
+            <div class="left"><span class="icon">🔴</span><div><div class="name">Aim Neck</div><div class="sub">Ngắm vào cổ</div></div></div>
+            <div class="switch" id="sw_aim_neck"></div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tabPro">
+        <div class="feature-item" onclick="toggleFeature('pro', 'speed')">
+            <div class="left"><span class="icon">🏃</span><div><div class="name">Chạy nhanh</div><div class="sub">Tăng tốc di chuyển</div></div></div>
+            <div class="switch" id="sw_pro_speed"></div>
+        </div>
+        <div class="feature-item" onclick="toggleFeature('pro', 'fakedame')">
+            <div class="left"><span class="icon">💥</span><div><div class="name">Fake Dame</div><div class="sub">Giả lập sát thương</div></div></div>
+            <div class="switch" id="sw_pro_fakedame"></div>
+        </div>
+        <div class="feature-item" onclick="toggleFeature('pro', 'aimdit')">
+            <div class="left"><span class="icon">🌀</span><div><div class="name">Aim dị tật</div><div class="sub">Ngắm nâng cao</div></div></div>
+            <div class="switch" id="sw_pro_aimdit"></div>
+        </div>
+        <div class="feature-item" onclick="toggleFeature('pro', 'backjump')">
+            <div class="left"><span class="icon">🦘</span><div><div class="name">Backjump</div><div class="sub">Nhảy lùi</div></div></div>
+            <div class="switch" id="sw_pro_backjump"></div>
+        </div>
+        <div class="feature-item" onclick="toggleFeature('pro', 'shakepc')">
+            <div class="left"><span class="icon">📳</span><div><div class="name">Lắc như PC</div><div class="sub">Giật tâm như PC</div></div></div>
+            <div class="switch" id="sw_pro_shakepc"></div>
+        </div>
+        <div class="feature-item" onclick="toggleFeature('pro', 'hackcam')">
+            <div class="left"><span class="icon">📷</span><div><div class="name">Hack Cam</div><div class="sub">Mở rộng tầm nhìn</div></div></div>
+            <div class="switch" id="sw_pro_hackcam"></div>
+        </div>
+        <div class="feature-item" onclick="toggleFeature('pro', 'fastgun')">
+            <div class="left"><span class="icon">🔫</span><div><div class="name">Lấy súng nhanh</div><div class="sub">Đổi súng nhanh</div></div></div>
+            <div class="switch" id="sw_pro_fastgun"></div>
+        </div>
+        <div class="feature-item" onclick="toggleFeature('pro', 'fastfire')">
+            <div class="left"><span class="icon">🔥</span><div><div class="name">Bắn nhanh</div><div class="sub">Tăng tốc bắn</div></div></div>
+            <div class="switch" id="sw_pro_fastfire"></div>
+        </div>
+        <div class="feature-item" onclick="toggleFeature('pro', 'highjump')">
+            <div class="left"><span class="icon">⬆️</span><div><div class="name">Nhảy cao</div><div class="sub">Tăng độ cao</div></div></div>
+            <div class="switch" id="sw_pro_highjump"></div>
+        </div>
+    </div>
+
+    <button class="btn-vpn-download" onclick="downloadVPN()">
+        <span>📥</span> TẢI VPN ĐỂ KÍCH HOẠT
+    </button>
+</div>
+
+<div id="floatingBtn">🎯</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel">
+    <div class="admin-header">
+        <h2>🔧 Admin Panel</h2>
+        <button class="close-admin" onclick="closeAdmin()">✕ ĐÓNG</button>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🔑 Tạo Key Mới</div>
+        <div class="key-types">
+            <div class="key-type active" data-type="1H" onclick="selectKeyType('1H')">1H</div>
+            <div class="key-type" data-type="1D" onclick="selectKeyType('1D')">1D</div>
+            <div class="key-type" data-type="7D" onclick="selectKeyType('7D')">7D</div>
+            <div c
