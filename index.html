@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Overlay Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: #0a0e17;
+            color: #e0e8f0;
+            min-height: 100vh;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+        .app {
+            max-width: 480px;
+            width: 100%;
+            background: #111b26;
+            border-radius: 20px;
+            padding: 20px 18px 30px;
+            border: 1px solid #1f2e3c;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.7);
+            position: relative;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        /* HEADER */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #1f2e3c;
+        }
+        .header .logo {
+            font-size: 18px;
+            font-weight: 800;
+            color: #00d4ff;
+        }
+        .header .logo span {
+            color: #fff;
+        }
+        .header .status {
+            font-size: 11px;
+            color: #2ecc71;
+            background: rgba(46,204,113,0.1);
+            padding: 4px 12px;
+            border-radius: 30px;
+            border: 1px solid rgba(46,204,113,0.3);
+        }
+        .header .status .dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #2ecc71;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* SECTION */
+        .section {
+            background: #0f1922;
+            border: 1px solid #1a2a3a;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        .section .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section .section-title.pink {
+            color: #e91e63;
+        }
+        .section .section-title .count {
+            font-size: 11px;
+            background: rgba(0,212,255,0.1);
+            padding: 2px 10px;
+            border-radius: 30px;
+            color: #00d4ff;
+            font-weight: 600;
+        }
+
+        /* TOGGLE ROW */
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #151f2a;
+        }
+        .toggle-row:last-child {
+            border-bottom: none;
+        }
+        .toggle-row .label {
+            flex: 1;
+        }
+        .toggle-row .label .name {
+            font-size: 14px;
+            color: #e0e8f0;
+            font-weight: 500;
+        }
+        .toggle-row .label .desc {
+            font-size: 11px;
+            color: #6a8a9a;
+            margin-top: 2px;
+        }
+
+        /* SWITCH */
+        .switch {
+            position: relative;
+            width: 46px;
+            height: 26px;
+            background: #1a2a3a;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+        .switch.on {
+            background: #00d4ff;
+            box-shadow: 0 0 20px rgba(0,212,255,0.4);
+        }
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.3s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .switch.on::after {
+            left: 23px;
+        }
+
+        /* SLIDER ROW */
+        .slider-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #151f2a;
+        }
+        .slider-row:last-child {
+            border-bottom: none;
+        }
+        .slider-row .label {
+            font-size: 14px;
+            color: #e0e8f0;
+            font-weight: 500;
+            min-width: 120px;
+        }
+        .slider-row input[type="range"] {
+            flex: 1;
+            margin: 0 12px;
+            -webkit-appearance: none;
+            height: 4px;
+            background: #1a2a3a;
+            border-radius: 4px;
+            outline: none;
+        }
+        .slider-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #00d4ff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0,212,255,0.5);
+        }
+        .slider-row .value {
+            font-size: 13px;
+            color: #00d4ff;
+            font-weight: 700;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        /* APPLY BUTTON */
+        .apply-btn {
+            width: 100%;
+            padding: 16px 0;
+            background: linear-gradient(135deg, #00b4d8, #0077b6);
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 16px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 30px rgba(0,180,216,0.3);
+        }
+        .apply-btn:hover {
+            box-shadow: 0 0 40px rgba(0,180,216,0.5);
+            transform: translateY(-1px);
+        }
+        .apply-btn:active {
+            transform: scale(0.98);
+        }
+        .apply-btn.applied {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            box-shadow: 0 0 30px rgba(46,204,113,0.3);
+        }
+
+        /* CROSSHAIR TÂM ẢO */
+        #virtualCrosshair {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            pointer-events: none;
+            z-index: 99998;
+        }
+        #virtualCrosshair.active {
+            display: block;
+        }
+        #virtualCrosshair .line {
+            position: absolute;
+            background: rgba(255, 50, 50, 0.9);
+            box-shadow: 0 0 10px rgba(255, 50, 50, 0.8);
+        }
+        #virtualCrosshair .line.h {
+            width: 100%;
+            height: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        #virtualCrosshair .line.v {
+            width: 2px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #virtualCrosshair .dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #ff3333;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px #ff3333;
+        }
+        #virtualCrosshair .circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid rgba(255, 50, 50, 0.6);
+            border-radius: 50%;
+            top: 0;
+            left: 0;
+            box-shadow: 0 0 15px rgba(255, 50, 50, 0.4);
+        }
+
+        /* FLOATING OVERLAY */
+        #floatingOverlay {
+            display: none;
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 9999;
+            background: rgba(15, 25, 34, 0.95);
+            border: 1px solid #00d4ff;
+            border-radius: 14px;
+            padding: 12px;
+            box-shadow: 0 0 30px rgba(0,212,255,0.3);
+            backdrop-filter: blur(10px);
+            width: 180px;
+        }
+        #floatingOverlay.active {
+            display: block;
+        }
+        #floatingOverlay .float-title {
+            font-size: 12px;
+            color: #00d4ff;
+            font-weight: 700;
+            text-align: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1a2a3a;
+            margin-bottom: 8px;
+            cursor: move;
+        }
+        #floatingOverlay .float-btn {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            border: none;
+            border-radius: 8px;
+            background: #1a2a3a;
+            color: #6a8a9a;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #floatingOverlay .float-btn.on {
+            background: rgba(0,212,255,0.15);
+            color: #00d4ff;
+            border: 1px solid rgba(0,212,255,0.3);
+        }
+        #floatingOverlay .float-btn .indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3a4a5a;
+        }
+        #floatingOverlay .float-btn.on .indicator {
+            background: #00d4ff;
+            box-shadow: 0 0 10px #00d4ff;
+        }
+        #floatingOverlay .float-close {
+            width: 100%;
+            padding: 6px;
+            border: none;
+            border-radius: 8px;
+            background: #e63946;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f1922;
+            border: 1px solid #00d4ff;
+            color: #00d4ff;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 99999;
+            display: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            max-width: 90vw;
+            text-align: center;
+        }
+        .toast.show {
+            display: block;
+            animation: toastIn 0.3s ease;
+        }
+        .toast.success {
+            border-color: #2ecc71;
+            color: #2ecc71;
+        }
+        .toast.error {
+            border-color: #e63946;
+            color: #e63946;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid #1a2a3a;
+            font-size: 11px;
+            color: #3a4a5a;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+<!-- TÂM ẢO -->
+<div id="virtualCrosshair">
+    <div class="line h"></div>
+    <div class="line v"></div>
+    <div class="dot"></div>
+    <div class="circle"></div>
+</div>
+
+<div class="app">
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo">OVERLAY <span>TOOL</span></div>
+        <div class="status"><span class="dot"></span>ONLINE</div>
+    </div>
+
+    <!-- SECTION 1: AIM (CHỈ 1 CÁI) -->
+    <div class="section">
+        <div class="section-title">
+            <span>// AIM SETTINGS</span>
+            <span class="count" id="aimCount">0/1</span>
+        </div>
+        <div class="toggle-row">
+            <div class="label">
+                <div class="name">🎯 Aim Headshot</div>
+                <div class="desc">Tự động ngắm đầu</div>
+            </div>
+            <div class="switch" data-group="aim" data-id="headshot"></div>
+        </div>
+        <div class="toggle-row">
+            <div class="label">
+                <div class="name">💀 Aim Neck</div>
+                <div class="desc">Tự động ngắm cổ</div>
+            </div>
+            <div class="switch" data-group="aim" data-id="neck"></div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: EXTRA (BẬT NHIỀU) -->
+    <div class="section">
+        <div class="section-title pink">
+            <span>// CHỨC NĂNG EXTRA</span>
+            <span class="count" id="extraCount">0/3</span>
+        </div>
+        <div class="toggle-row">
+            <div class="label">
+                <div class="name">🐢 Fix Lag</div>
+                <div class="desc">Giảm lag, tăng FPS</div>
+            </div>
+            <div class="switch" data-group="extra" data-id="fixlag"></div>
+        </div>
+        <div class="toggle-row">
+            <div class="label">
+                <div class="name">🌀 Tâm Ảo</div>
+                <div class="desc">Hiện tâm ngắm trên màn hình</div>
+            </div>
+            <div class="switch" data-group="extra" data-id="tamao"></div>
+        </div>
+        <div class="toggle-row">
+            <div class="label">
+                <div class="name">⚡ Nhẹ Tâm</div>
+                <div class="desc">Giảm lực kéo tâm</div>
+            </div>
+            <div class="switch" data-group="extra" data-id="nhetam"></div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: SLIDER -->
+    <div class="section">
+        <div class="section-title">
+            <span>// CÀI ĐẶT ĐỘ NHẠY</span>
+        </div>
+        <div class="slider-row">
+            <span class="label">Độ nhạy ngắm</span>
+            <input type="range" min="0" max="100" value="75" id="sensAim">
+            <span class="value" id="sensAimVal">75</span>
+        </div>
+        <div class="slider-row">
+            <span class="label">Độ nhạy kéo</span>
+            <input type="range" min="0" max="100" value="85" id="sensDrag">
+            <span class="value" id="sensDragVal">85</span>
+        </div>
+        <div class="slider-row">
+            <span class="label">Kích thước tâm</span>
+            <input type="range" min="20" max="100" value="60" id="crossSize">
+            <span class="value" id="crossSizeVal">60</span>
+        </div>
+    </div>
+
+    <!-- APPLY BUTTON -->
+    <button class="apply-btn" onclick="applySettings()" id="applyBtn">
+        ✓ ÁP DỤNG
+    </button>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        Overlay Tool v1.0<br>
+        Bật nhiều chức năng - Riêng Aim chỉ 1 cái
+    </div>
+</div>
+
+<!-- FLOATING OVERLAY -->
+<div id="floatingOverlay">
+    <div class="float-title" id="floatTitle">🎯 OVERLAY</div>
+    <div class="float-btn" data-group="aim" data-id="headshot">
+        <span>Aim Headshot</span>
+        <span class="indicator"></span>
+    </div>
+    <div class="float-btn" data-group="aim" data-id="neck">
+        <span>Aim Neck</span>
+        <span class="indicator"></span>
+    </div>
+    <div class="float-btn" data-group="extra" data-id="fixlag">
+        <span>Fix Lag</span>
+        <span class="indicator"></span>
+    </div>
+    <div class="float-btn" data-group="extra" data-id="tamao">
+        <span>Tâm Ảo</span>
+        <span class="indicator"></span>
+    </div>
+    <div class="float-btn" data-group="extra" data-id="nhetam">
+        <span>Nhẹ Tâm</span>
+        <span class="indicator"></span>
+    </div>
+    <button class="float-close" onclick="hideFloating()">✕ ĐÓNG</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+    // ==================================================
+    // ============ STATE ============
+    // ==================================================
+    const groups = {
+        aim: null,      // Chỉ 1 cái (aim settings)
+        extra: []       // Bật nhiều (extra)
+    };
+
+    // ==================================================
+    // ============ TOAST ============
+    // ==================================================
+    function showToast(msg, type) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = 'toast show ' + (type || '');
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => toast.className = 'toast', 2000);
+    }
+
+    // ==================================================
+    // ============ TOGGLE ============
+    // ==================================================
+    function handleToggle(group, id, el) {
+        const isOn = el.classList.contains('on');
+
+        if (group === 'aim') {
+            // AIM: Chỉ 1 cái
+            if (isOn) {
+                el.classList.remove('on');
+                groups.aim = null;
+                showToast('🔴 Đã tắt: ' + getFeatureName(id), 'error');
+            } else {
+                // Tắt cái khác trong nhóm aim
+                document.querySelectorAll('.switch[data-group="aim"]').forEach(s => {
+                    s.classList.remove('on');
+                });
+                el.classList.add('on');
+                groups.aim = id;
+                showToast('🟢 Đã bật: ' + getFeatureName(id), 'success');
+            }
+        } else {
+            // EXTRA: Bật nhiều
+            if (isOn) {
+                el.classList.remove('on');
+                groups.extra = groups.extra.filter(x => x !== id);
+                showToast('🔴 Đã tắt: ' + getFeatureName(id), 'error');
+                
+                // Nếu tắt tâm ảo -> ẩn crosshair
+                if (id === 'tamao') {
+                    document.getElementById('virtualCrosshair').classList.remove('active');
+                }
+            } else {
+                el.classList.add('on');
+                if (!groups.extra.includes(id)) {
+                    groups.extra.push(id);
+                }
+                showToast('🟢 Đã bật: ' + getFeatureName(id), 'success');
+                
+                // Nếu bật tâm ảo -> hiện crosshair
+                if (id === 'tamao') {
+                    document.getElementById('virtualCrosshair').classList.add('active');
+                    updateCrosshairSize();
+                }
+            }
+        }
+
+        syncFloating();
+        updateCount();
+    }
+
+    function getFeatureName(id) {
+        const names = {
+            headshot: 'Aim Headshot',
+            neck: 'Aim Neck',
+            fixlag: 'Fix Lag',
+            tamao: 'Tâm Ảo',
+            nhetam: 'Nhẹ Tâm'
+        };
+        return names[id] || id;
+    }
+
+    function updateCount() {
+        const aimOn = groups.aim ? 1 : 0;
+        document.getElementById('aimCount').textContent = aimOn + '/1';
+        document.getElementById('extraCount').textContent = groups.extra.length + '/3';
+    }
+
+    // ==================================================
+    // ============ FLOATING OVERLAY ============
+    // ==================================================
+    function showFloating() {
+        document.getElementById('floatingOverlay').classList.add('active');
+    }
+
+    function hideFloating() {
+        document.getElementById('floatingOverlay').classList.remove('active');
+        showToast('📱 Đã tắt overlay', 'error');
+    }
+
+    function syncFloating() {
+        document.querySelectorAll('#floatingOverlay .float-btn').forEach(fb => {
+            const group = fb.dataset.group;
+            const id = fb.dataset.id;
+            let isOn = false;
+            
+            if (group === 'aim') {
+                isOn = groups.aim === id;
+            } else {
+                isOn = groups.extra.includes(id);
+            }
+            
+            if (isOn) fb.classList.add('on');
+            else fb.classList.remove('on');
+        });
+    }
+
+    // ==================================================
+    // ============ DRAG FLOATING ============
+    // ==================================================
+    function makeDraggable() {
+        const el = document.getElementById('floatingOverlay');
+        const handle = document.getElementById('floatTitle');
+        let startX, startY, startLeft, startTop, dragging;
+
+        handle.addEventListener('mousedown', startDrag);
+        handle.addEventListener('touchstart', startDrag, { passive: true });
+
+        function startDrag(e) {
+            const touch = e.touches ? e.touches[0] : e;
+            startX = touch.clientX;
+            startY = touch.clientY;
+            const rect = el.getBoundingClientRect();
+            startLeft = rect.left;
+            startTop = rect.top;
+            dragging = true;
+            el.style.transition = 'none';
+
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('touchmove', onDrag, { passive: false });
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        function onDrag(e) {
+            if (!dragging) return;
+            const touch = e.touches ? e.touches[0] : e;
+            const dx = touch.clientX - startX;
+            const dy = touch.clientY - startY;
+            el.style.left = (startLeft + dx) + 'px';
+            el.style.top = (startTop + dy) + 'px';
+            el.style.right = 'auto';
+        }
+
+        function stopDrag() {
+            dragging = false;
+            el.style.transition = '';
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('touchmove', onDrag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+    }
+
+    // ==================================================
+    // ============ SLIDER ============
+    // ==================================================
+    function initSliders() {
+        const sliders = [
+            { id: 'sensAim', val: 'sensAimVal' },
+            { id: 'sensDrag', val: 'sensDragVal' },
+            { id: 'crossSize', val: 'crossSizeVal', onChange: updateCrosshairSize }
+        ];
+        sliders.forEach(s => {
+            const input = document.getElementById(s.id);
+            const val = document.getElementById(s.val);
+            input.addEventListener('input', () => {
+                val.textContent = input.value;
+                if (s.onChange) s.onChange();
+            });
+        });
+    }
+
+    function updateCrosshairSize() {
+        const size = document.getElementById('crossSize').value;
+        const ch = document.getElementById('virtualCrosshair');
+        if (ch) {
+            ch.style.width = size + 'px';
+            ch.style.height = size + 'px';
+        }
+    }
+
+    // ==================================================
+    // ============ APPLY ============
+    // ==================================================
+    function applySettings() {
+        const btn = document.getElementById('applyBtn');
+        btn.textContent = '⏳ ĐANG ÁP DỤNG...';
+        btn.disabled = true;
+
+        setTimeout(() => {
+            btn.textContent = '✅ ĐÃ ÁP DỤNG';
+            btn.classList.add('applied');
+            showToast('✅ Đã áp dụng cài đặt!', 'success');
+
+            // Hiện floating overlay
+            setTimeout(() => {
+                showFloating();
+            }, 500);
+
+            setTimeout(() => {
+                btn.textContent = '✓ ÁP DỤNG';
+                btn.classList.remove('applied');
+                btn.disabled = false;
+            }, 2000);
+        }, 1000);
+    }
+
+    // ==================================================
+    // ============ INIT ============
+    // ==================================================
+    window.addEventListener('load', function() {
+        // Gắn sự kiện cho switch chính
+        document.querySelectorAll('.switch').forEach(sw => {
+            sw.addEventListener('click', function() {
+                handleToggle(this.dataset.group, this.dataset.id, this);
+            });
+        });
+
+        // Gắn sự kiện cho floating buttons
+        document.querySelectorAll('#floatingOverlay .float-btn').forEach(fb => {
+            fb.addEventListener('click', function() {
+                const group = this.dataset.group;
+                const id = this.dataset.id;
+                const mainSw = document.querySelector(`.switch[data-group="${group}"][data-id="${id}"]`);
+                if (mainSw) {
+                    handleToggle(group, id, mainSw);
+                }
+            });
+        });
+
+        makeDraggable();
+        initSliders();
+        updateCount();
+
+        console.log('📱 Overlay Tool - Đã khởi động');
+    });
+
+    document.addEventListener('contextmenu', e => e.preventDefault());
+</script>
+</body>
+</html>
