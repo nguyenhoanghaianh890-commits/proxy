@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IPA Proxy</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0e14;color:#e8f0f8;font-family:-apple-system,sans-serif;font-size:14px;min-height:100vh}
+.wrap{max-width:460px;margin:0 auto;padding:16px}
+.card{background:#131a24;border:1px solid #2a3949;border-radius:10px;padding:16px;margin-bottom:12px}
+h1{text-align:center;font-size:28px;color:#00d9ff;letter-spacing:4px;margin:10px 0 4px}
+h3{font-size:12px;color:#00d9ff;letter-spacing:2px;text-transform:uppercase;margin:0 0 10px}
+label{display:block;font-size:11px;color:#7a8a9e;margin-bottom:4px;text-transform:uppercase}
+input,select{width:100%;height:44px;background:#1b2532;border:1px solid #2a3949;border-radius:8px;color:#e8f0f8;padding:0 12px;font-size:14px;margin-bottom:10px;font-family:monospace;outline:none}
+input:focus,select:focus{border-color:#00d9ff}
+button{width:100%;height:46px;border:none;border-radius:8px;background:#00d9ff;color:#001018;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.6;cursor:not-allowed}
+.msg{font-size:12px;text-align:center;min-height:16px;margin-top:8px}
+.ok{color:#3ddc84}.err{color:#ff4d5e}
+.hint{font-size:11px;color:#7a8a9e;line-height:1.7}
+.hint b{color:#00d9ff}
+.note{font-size:11px;color:#7a8a9e;text-align:center;padding:6px 0}
+.topActions{display:flex;justify-content:flex-end;margin-bottom:10px}
+.exitBtn{width:auto;padding:8px 16px;height:auto;background:#1b2532;color:#ff4d5e;border:1px solid #2a3949;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+.exitBtn:active{background:#2a3949}
+#screen-key{display:block}
+#screen-menu{display:none}
+.row{display:flex;justify-content:space-between;align-items:center;background:#1b2532;border:1px solid #2a3949;border-radius:8px;padding:12px;margin-bottom:6px}
+.row span{font-size:13px}
+.sw{width:46px;height:26px;background:#3a3f47;border-radius:13px;position:relative;cursor:pointer;transition:.2s;flex-shrink:0}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
+.sw.on{background:#00d9ff}
+.sw.on::after{left:22px}
+.tabs{display:flex;background:#080c10;border-radius:8px;overflow:hidden;margin-bottom:10px;border:1px solid #2a3949}
+.tab{flex:1;padding:10px;text-align:center;font-size:11px;font-weight:700;color:#7a8a9e;cursor:pointer;letter-spacing:1px}
+.tab.active{color:#fff;background:#1b2532}
+.gameRow{display:flex;gap:8px;margin-bottom:10px}
+.gameBtn{flex:1;padding:12px;background:#1b2532;border:1px solid #2a3949;border-radius:8px;color:#7a8a9e;font-weight:700;text-align:center;cursor:pointer;font-size:12px}
+.gameBtn.active{background:#00d9ff;color:#001018;border-color:#00d9ff}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #2a3949}
+.topbar .info{font-size:11px;color:#7a8a9e;flex:1;word-break:break-all}
+.topbar .info b{color:#00d9ff}
+.logoutBtn{width:auto;padding:8px 14px;height:auto;background:#1b2532;color:#ff4d5e;border:1px solid #2a3949;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;flex-shrink:0;margin-left:8px;text-transform:uppercase}
+.keyItem{background:#1b2532;border:1px solid #2a3949;border-radius:6px;padding:8px 10px;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.keyItem .code{font-family:monospace;font-size:11px;color:#00d9ff;word-break:break-all;flex:1}
+.keyItem .del{width:28px;height:28px;background:#ff4d5e;color:#fff;border:none;border-radius:5px;font-weight:700;cursor:pointer;flex-shrink:0;padding:0}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1b2532;border:1px solid #2a3949;padding:10px 18px;border-radius:8px;font-size:12px;opacity:0;transition:.25s;pointer-events:none;z-index:99;white-space:nowrap}
+#toast.on{opacity:1}
+#crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;pointer-events:none;z-index:8;display:none}
+#crosshair.on{display:block}
+#crosshair::before,#crosshair::after{content:'';position:absolute;background:#ff4d5e;box-shadow:0 0 8px #ff4d5e}
+#crosshair::before{left:50%;top:0;width:2px;height:100%;transform:translateX(-50%)}
+#crosshair::after{top:50%;left:0;height:2px;width:100%;transform:translateY(-50%)}
+#crosshair .dot{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;background:#ff4d5e;box-shadow:0 0 12px #ff4d5e}
+</style>
+</head>
+<body>
+
+<div id="crosshair"><div class="dot"></div></div>
+
+<div class="wrap">
+
+<div id="screen-key">
+  <div class="topActions">
+    <button class="exitBtn" id="exitKeyBtn">THOÁT</button>
+  </div>
+
+  <h1>IPA PROXY</h1>
+  <div style="text-align:center;color:#7a8a9e;font-size:11px;letter-spacing:2px;margin-bottom:20px">ENTER KEY TO CONTINUE</div>
+
+  <div class="card">
+    <h3>Nhập Key</h3>
+    <label>Key</label>
+    <input id="keyInput" placeholder="Nhập key" autocomplete="off">
+    <button id="keyBtn">XÁC NHẬN</button>
+    <div class="msg" id="keyMsg"></div>
+    <div class="note" id="devNote"></div>
+  </div>
+
+  <div class="card">
+    <h3>Hướng dẫn</h3>
+    <div class="hint">
+      <div>• <b>1d-ipa-1tb-xxx</b> — 1 ngày, 1 thiết bị</div>
+      <div>• <b>7d-ipa-3tb-xxx</b> — 7 ngày, 3 thiết bị</div>
+      <div>• <b>30d-ipa-5tb-xxx</b> — 30 ngày, 5 thiết bị</div>
+      <div>• <b>1h-free-1tb-xxx</b> — free 1 giờ</div>
+      <div style="margin-top:8px">Số trước <b>tb</b> = số thiết bị vào được.</div>
+    </div>
+  </div>
+</div>
+
+<div id="screen-menu">
+  <div class="topbar">
+    <div class="info">Key: <b id="curKey">—</b><br><span id="keyMeta" style="font-size:10px"></span></div>
+    <button class="logoutBtn" id="logoutBtn">THOÁT</button>
+  </div>
+
+  <div class="gameRow">
+    <div class="gameBtn active" data-game="ff">FF</div>
+    <div class="gameBtn" data-game="ffmax">FF MAX</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="aim">AIM</div>
+    <div class="tab" data-tab="esp">ESP</div>
+    <div class="tab" data-tab="misc">MISC</div>
+  </div>
+
+  <div class="card" id="panel-aim">
+    <div class="row"><span>Aim Bot</span><div class="sw" data-k="aimbot" data-g="aim"></div></div>
+    <div class="row"><span>Silent Aim</span><div class="sw" data-k="silent" data-g="aim"></div></div>
+    <div class="row"><span>No Recoil</span><div class="sw" data-k="norecoil" data-g="aim"></div></div>
+    <div class="row"><span>Tâm Ảo</span><div class="sw" data-k="crosshair" data-g="aim"></div></div>
+    <div class="note">AIM chỉ bật 1 cái cùng lúc</div>
+  </div>
+
+  <div class="card" id="panel-esp" style="display:none">
+    <div class="row"><span>ESP Line</span><div class="sw" data-k="espLine" data-g="esp"></div></div>
+    <div class="row"><span>ESP Box</span><div class="sw" data-k="espBox" data-g="esp"></div></div>
+    <div class="row"><span>Health Bar</span><div class="sw" data-k="espHealth" data-g="esp"></div></div>
+    <div class="row"><span>ESP Name</span><div class="sw" data-k="espName" data-g="esp"></div></div>
+  </div>
+
+  <div class="card" id="panel-misc" style="display:none">
+    <div class="row"><span>Run Speed</span><div class="sw" data-k="runSpeed" data-g="misc"></div></div>
+    <div class="row"><span>Sky Speed</span><div class="sw" data-k="skySpeed" data-g="misc"></div></div>
+    <div class="row"><span>Heal Fast</span><div class="sw" data-k="healFast" data-g="misc"></div></div>
+    <div class="row"><span>Anti Lag</span><div class="sw" data-k="antiLag" data-g="misc"></div></div>
+  </div>
+
+  <div class="card" id="adminCard" style="display:none">
+    <h3>Admin Panel</h3>
+    <label>Key muốn tạo</label>
+    <input id="newKey" placeholder="1d-ipa-2tb-abc">
+    <label>Thời hạn</label>
+    <select id="newDur">
+      <option value="1h">1 giờ</option>
+      <option value="1d" selected>1 ngày</option>
+      <option value="7d">7 ngày</option>
+      <option value="30d">30 ngày</option>
+    </select>
+    <label>Số thiết bị (1-1000)</label>
+    <input id="newDev" type="number" value="1" min="1" max="1000">
+    <button id="createBtn">TẠO KEY</button>
+    <div class="msg" id="adminMsg"></div>
+    <h3 style="margin-top:16px">Danh sách</h3>
+    <div id="keyList"></div>
+  </div>
+</div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+var $ = function(s){ return document.querySelector(s); };
+var $$ = function(s){ return document.querySelectorAll(s); };
+var ADMIN = "adminipaproxy";
+var LK = "ipa_keys", LS = "ipa_session", LD = "ipa_device";
+
+function devId(){
+  var d = localStorage.getItem(LD);
+  if (!d){
+    d = "dev_" + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+    localStorage.setItem(LD, d);
+  }
+  return d;
+}
+
+function loadKeys(){
+  try { var r = localStorage.getItem(LK); if (r) return JSON.parse(r); } catch(e){}
+  var t = Date.now();
+  return {
+    "1d-ipa-1tb-demo":  {dur:"1d", maxDevices:1, devices:[], created:t, expires:t+864e5, used:false},
+    "7d-ipa-3tb-demo":  {dur:"7d", maxDevices:3, devices:[], created:t, expires:t+7*864e5, used:false},
+    "30d-ipa-5tb-demo": {dur:"30d", maxDevices:5, devices:[], created:t, expires:t+30*864e5, used:false},
+    "1h-free-1tb-demo": {dur:"1h", maxDevices:1, devices:[], created:t, expires:t+36e5, used:false}
+  };
+}
+function saveKeys(k){ try { localStorage.setItem(LK, JSON.stringify(k)); } catch(e){} }
+var K = loadKeys(); saveKeys(K);
+
+function parseDev(k){ var m = String(k).toLowerCase().match(/(\d+)tb/); return m ? Math.max(1,parseInt(m[1],10)) : 1; }
+function expired(i){ return Date.now() > i.expires; }
+function left(i){
+  var ms = i.expires - Date.now();
+  if (ms <= 0) return "Hết hạn";
+  var h = Math.floor(ms/36e5), m = Math.floor((ms%36e5)/6e4);
+  if (h >= 24) return Math.floor(h/24)+"d "+(h%24)+"h";
+  if (h > 0) return h+"h "+m+"m";
+  return m+"m";
+}
+
+var tTO;
+function toast(msg){
+  var t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(tTO);
+  tTO = setTimeout(function(){ t.classList.remove("on"); }, 1500);
+}
+
+$("#devNote").textContent = "Thiết bị: " + devId().slice(-8);
+
+$("#keyBtn").addEventListener("click", function(){
+  var raw = $("#keyInput").value.trim();
+  var msg = $("#keyMsg");
+  if (!raw){ msg.textContent = "Chưa nhập"; msg.className = "msg err"; return; }
+  var low = raw.toLowerCase();
+
+  if (low === ADMIN || low.indexOf(ADMIN + "-") === 0){
+    msg.textContent = "✓ OK";
+    msg.className = "msg ok";
+    sessionStorage.setItem(LS, JSON.stringify({key:raw, admin:true}));
+    setTimeout(function(){ enter(raw, true); }, 250);
+    return;
+  }
+
+  var info = K[raw];
+  if (!info){ msg.textContent = "Key không tồn tại"; msg.className = "msg err"; return; }
+  if (expired(info)){ msg.textContent = "Key hết hạn"; msg.className = "msg err"; return; }
+
+  var d = devId();
+  if (!info.devices) info.devices = [];
+  var md = info.maxDevices || parseDev(raw);
+  if (info.devices.indexOf(d) === -1){
+    if (info.devices.length >= md){
+      msg.textContent = "Đủ " + md + " thiết bị";
+      msg.className = "msg err";
+      return;
+    }
+    info.devices.push(d);
+  }
+  info.used = true;
+  saveKeys(K);
+  msg.textContent = "✓ OK — " + left(info) + " | " + info.devices.length + "/" + md + " TB";
+  msg.className = "msg ok";
+  sessionStorage.setItem(LS, JSON.stringify({key:raw, admin:false}));
+  setTimeout(function(){ enter(raw, false); }, 300);
+});
+
+$("#keyInput").addEventListener("keydown", function(e){
+  if (e.key === "Enter") $("#keyBtn").click();
+});
+
+function enter(key, admin){
+  $("#screen-key").style.display = "none";
+  $("#screen-menu").style.display = "block";
+  $("#curKey").textContent = key;
+  if (admin){
+    $("#keyMeta").textContent = "Admin";
+    $("#adminCard").style.display = "block";
+    renderList();
+  } else {
+    var i = K[key];
+    if (i){
+      var md = i.maxDevices || parseDev(key);
+      $("#keyMeta").textContent = "Còn " + left(i) + " · " + (i.devices||[]).length + "/" + md + " TB";
+    }
+    $("#adminCard").style.display = "none";
+  }
+}
+
+function exitToKeyScreen(){
+  sessionStorage.removeItem(LS);
+  $("#screen-menu").style.display = "none";
+  $("#screen-key").style.display = "block";
+  $("#keyInput").value = "";
+  $("#keyMsg").textContent = "";
+  $("#crosshair").classList.remove("on");
+  toast("Đã thoát");
+}
+
+$("#logoutBtn").addEventListener("click", exitToKeyScreen);
+$("#exitKeyBtn").addEventListener("click", exitToKeyScreen);
+
+/* ========== ADMIN TẠO KEY — CHỜ 60s ========== */
+var creating = false;
+var countdownTimer = null;
+
+$("#createBtn").addEventListener("click", function(){
+  if (creating) return;
+
+  var nk = $("#newKey").value.trim();
+  var dur = $("#newDur").value;
+  var dv = parseInt($("#newDev").value, 10) || 1;
+  var m = $("#adminMsg");
+  var btn = $("#createBtn");
+
+  if (!nk){ m.textContent = "Nhập key"; m.className = "msg err"; return; }
+  if (K[nk]){ m.textContent = "Đã tồn tại"; m.className = "msg err"; return; }
+  if (dv < 1 || dv > 1000){ m.textContent = "Số TB 1-1000"; m.className = "msg err"; return; }
+
+  creating = true;
+  var remain = 60;
+  btn.disabled = true;
+  btn.textContent = "ĐANG TẠO... " + remain + "s";
+  m.textContent = "";
+  m.className = "msg";
+
+  countdownTimer = setInterval(function(){
+    remain--;
+    if (remain > 0){
+      btn.textContent = "ĐANG TẠO... " + remain + "s";
+    } else {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+
+      var ms = dur === "1h" ? 36e5 : dur === "1d" ? 864e5 : dur === "7d" ? 7*864e5 : 30*864e5;
+      K[nk] = {dur:dur, maxDevices:dv, devices:[], created:Date.now(), expires:Date.now()+ms, used:false};
+      saveKeys(K);
+
+      btn.disabled = false;
+      btn.textContent = "TẠO KEY";
+      creating = false;
+
+      showKeyPopup(nk, dur, dv);
+
+      $("#newKey").value = "";
+      renderList();
+      m.textContent = "✓ Đã tạo " + nk;
+      m.className = "msg ok";
+      toast("Đã tạo " + nk);
+    }
+  }, 1000);
+});
+
+function showKeyPopup(key, dur, dev){
+  var overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px";
+
+  var box = document.createElement("div");
+  box.style.cssText = "background:#131a24;border:1px solid #2a3949;border-radius:12px;padding:24px;max-width:380px;width:100%;text-align:center";
+
+  var durText = dur === "1h" ? "1 giờ" : dur === "1d" ? "1 ngày" : dur === "7d" ? "7 ngày" : "30 ngày";
+
+  box.innerHTML =
+    '<div style="font-size:11px;color:#7a8a9e;letter-spacing:2px;margin-bottom:12px">KEY ĐÃ TẠO</div>' +
+    '<div style="font-family:monospace;font-size:15px;font-weight:700;color:#00d9ff;word-break:break-all;background:#1b2532;border:1px solid #2a3949;border-radius:8px;padding:14px;margin-bottom:14px" id="_popupKey">' + key + '</div>' +
+    '<div style="font-size:12px;color:#7a8a9e;margin-bottom:20px">' + durText + ' · ' + dev + ' thiết bị</div>' +
+    '<button id="_popupCopy" style="width:100%;height:42px;background:#3ddc84;color:#001018;border:none;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;margin-bottom:8px">SAO CHÉP KEY</button>' +
+    '<button id="_popupClose" style="width:100%;height:42px;background:#1b2532;color:#e8f0f8;border:1px solid #2a3949;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer">ĐÓNG</button>';
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  document.getElementById("_popupCopy").addEventListener("click", function(){
+    var txt = document.getElementById("_popupKey").textContent;
+    if (navigator.clipboard){
+      navigator.clipboard.writeText(txt).then(function(){
+        toast("Đã sao chép");
+      }).catch(function(){ fallbackCopy(txt); });
+    } else {
+      fallbackCopy(txt);
+    }
+  });
+
+  document.getElementById("_popupClose").addEventListener("click", function(){
+    document.body.removeChild(overlay);
+  });
+
+  overlay.addEventListener("click", function(e){
+    if (e.target === overlay) document.body.removeChild(overlay);
+  });
+}
+
+function fallbackCopy(text){
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); toast("Đã sao chép"); }
+  catch(e){ toast("Không sao chép được"); }
+  document.body.removeChild(ta);
+}
+
+function renderList(){
+  var box = $("#keyList");
+  box.innerHTML = "";
+  var arr = Object.keys(K);
+  if (arr.length === 0){
+    box.innerHTML = '<div style="text-align:center;color:#7a8a9e;padding:10px">Chưa có key</div>';
+    return;
+  }
+  arr.sort(function(a,b){ return K[b].created - K[a].created; });
+  arr.forEach(function(k){
+    var i = K[k];
+    var ex = expired(i);
+    var md = i.maxDevices || parseDev(k);
+    var dc = (i.devices||[]).length;
+    var row = document.createElement("div");
+    row.className = "keyItem";
+    row.innerHTML =
+      '<div class="code">' + k +
+      '<div style="font-size:10px;color:#7a8a9e;margin-top:3px">' +
+      i.dur + ' · ' + (ex ? "Hết hạn" : left(i)) + ' · ' + dc + '/' + md + 'TB</div></div>' +
+      '<button class="del" data-k="' + k + '">×</button>';
+    box.appendChild(row);
+  });
+  Array.prototype.forEach.call(box.querySelectorAll(".del"), function(b){
+    b.addEventListener("click", function(){
+      var k = b.getAttribute("data-k");
+      if (confirm("Xoá " + k + "?")){
+        delete K[k]; saveKeys(K); renderList(); toast("Đã xoá");
+      }
+    });
+  });
+}
+
+var S = {
+  game:"ff", aimbot:false, silent:false, norecoil:false, crosshair:false,
+  espLine:true, espBox:false, espHealth:false, espName:false,
+  runSpeed:false, skySpeed:false, healFast:false, antiLag:false
+};
+try {
+  var r = localStorage.getItem("ipa_menu");
+  if (r){ var p = JSON.parse(r); for (var k in p) S[k] = p[k]; }
+} catch(e){}
+function saveMenu(){ try { localStorage.setItem("ipa_menu", JSON.stringify(S)); } catch(e){} }
+
+function applyUI(){
+  $$(".sw").forEach(function(sw){ sw.classList.toggle("on", !!S[sw.dataset.k]); });
+  $$(".gameBtn").forEach(function(b){ b.classList.toggle("active", b.dataset.game === S.game); });
+  $("#crosshair").classList.toggle("on", !!S.crosshair);
+}
+
+$$(".gameBtn").forEach(function(b){
+  b.addEventListener("click", function(){
+    S.game = b.dataset.game;
+    $$(".gameBtn").forEach(function(x){ x.classList.remove("active"); });
+    b.classList.add("active");
+    toast("Container: " + (S.game === "ff" ? "Free Fire" : "FF Max"));
+    saveMenu();
+  });
+});
+
+$$(".tab").forEach(function(t){
+  t.addEventListener("click", function(){
+    $$(".tab").forEach(function(x){ x.classList.remove("active"); });
+    t.classList.add("active");
+    ["aim","esp","misc"].forEach(function(n){
+      $("#panel-" + n).style.display = (n === t.dataset.tab) ? "block" : "none";
+    });
+  });
+});
+
+document.addEventListener("click", function(e){
+  var sw = e.target.closest(".sw");
+  if (sw){
+    var key = sw.dataset.k, grp = sw.dataset.g;
+    var nv = !S[key];
+    S[key] = nv;
+    sw.classList.toggle("on", nv);
+    if (grp === "aim" && nv){
+      $$('.sw[data-g="aim"]').forEach(function(o){
+        var ok = o.dataset.k;
+        if (ok !== key && S[ok]){ S[ok] = false; o.classList.remove("on"); }
+      });
+      toast("AIM: " + key + " ON");
+    } else {
+      toast((nv ? "ON " : "OFF ") + key);
+    }
+    if (key === "crosshair") $("#crosshair").classList.toggle("on", nv);
+    saveMenu();
+  }
+});
+
+setInterval(function(){
+  var s = sessionStorage.getItem(LS);
+  if (!s) return;
+  try {
+    var o = JSON.parse(s);
+    if (o.admin) return;
+    if (!K[o.key] || expired(K[o.key])){ toast("Hết hạn"); exitToKeyScreen(); }
+  } catch(e){}
+}, 30000);
+
+(function restore(){
+  var s = sessionStorage.getItem(LS);
+  if (!s) return;
+  try {
+    var o = JSON.parse(s);
+    if (o.admin || (K[o.key] && !expired(K[o.key]))) enter(o.key, o.admin);
+  } catch(e){}
+})();
+
+applyUI();
+
+})();
+</script>
+</body>
+</html>
